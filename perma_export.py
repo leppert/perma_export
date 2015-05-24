@@ -7,8 +7,8 @@ import json
 import yaml
 import urllib2
 
-API_ROOT = 'http://api.perma.dev:8000'
-MEDIA_ROOT = 'http://perma.dev:8000/media'
+API_ROOT = 'https://api.perma.cc'
+MEDIA_ROOT = 'https://perma.cc/media'
 
 def main(argv):
     key, output_dir = parse_args(argv)
