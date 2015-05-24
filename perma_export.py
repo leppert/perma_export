@@ -56,12 +56,26 @@ def query_paginated_api(key, url):
 def write_to_fixture(fixture, result):
     fixture.write(yaml.safe_dump(result['objects'], default_flow_style=False))
 
+def download_list(key, name):
+    print 'Downloading {0}...'.format(name.replace('_', ' '))
+    with open(name + '.yml', 'w') as yaml_file:
+        # initial seed for the first iteration
+        for result in query_paginated_api(key, '/v1/user/{0}/'.format(name)):
+            write_to_fixture(yaml_file, result)
+            percent = float(result['meta']['offset'] + len(result['objects'])) / result['meta']['total_count']
+            update_progress(round(percent, 3))
+
 def download_user(key):
+    print 'Downloading users...'
     with open('users.yml', 'w') as yaml_file:
+        # wrap this response so it's stored as an array
+        # to match the other resources
         result = {'objects': [query_api(key, '/v1/user')]}
         write_to_fixture(yaml_file, result)
+        update_progress(1)
 
 def download_archives(key):
+    print 'Downloading archives...'
     with open('archives.yml', 'w') as yaml_file:
         # initial seed for the first iteration
         for result in query_paginated_api(key, '/v1/user/archives/?limit=3'):
@@ -69,8 +83,8 @@ def download_archives(key):
 
             for i, archive in enumerate(result['objects']):
                 download_assets(archive)
-                per_comp = (result['meta']['offset'] + i + 1.0) / result['meta']['total_count']
-                update_progress(round(per_comp, 3))
+                percent = (result['meta']['offset'] + i + 1.0) / result['meta']['total_count']
+                update_progress(round(percent, 3))
 
 def download_assets(archive):
     asset = archive['assets'][0]
@@ -91,16 +105,10 @@ def download_assets(archive):
             cap_file.write(remote.read())
 
 def download_folders(key):
-    with open('folders.yml', 'w') as yaml_file:
-        # initial seed for the first iteration
-        for result in query_paginated_api(key, '/v1/user/folders/?limit=3'):
-            write_to_fixture(yaml_file, result)
+    download_list(key, 'folders')
 
 def download_vesting_orgs(key):
-    with open('vesting_orgs.yml', 'w') as yaml_file:
-        # initial seed for the first iteration
-        for result in query_paginated_api(key, '/v1/user/vesting_orgs/?limit=3'):
-            write_to_fixture(yaml_file, result)
+    download_list(key, 'vesting_orgs')
 
 # via: http://stackoverflow.com/a/15860757/313561
 def update_progress(progress):
