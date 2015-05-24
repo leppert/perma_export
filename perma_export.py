@@ -67,7 +67,7 @@ def write_to_fixture(fixture, result):
 
 def download_list(key, name):
     print 'Downloading {0}...'.format(name.replace('_', ' '))
-    with open(name + '.yml', 'w') as yaml_file:
+    with open(name + '.yaml', 'w') as yaml_file:
         # initial seed for the first iteration
         for result in query_paginated_api(key, '/v1/user/{0}/'.format(name)):
             write_to_fixture(yaml_file, result)
@@ -80,7 +80,7 @@ def download_list(key, name):
 
 def download_user(key):
     print 'Downloading users...'
-    with open('users.yml', 'w') as yaml_file:
+    with open('users.yaml', 'w') as yaml_file:
         # wrap this response so it's stored as an array
         # to match the other resources
         result = {'objects': [query_api(key, '/v1/user')]}
@@ -89,7 +89,7 @@ def download_user(key):
 
 def download_archives(key):
     print 'Downloading archives...'
-    with open('archives.yml', 'w') as yaml_file:
+    with open('archives.yaml', 'w') as yaml_file:
         # initial seed for the first iteration
         for result in query_paginated_api(key, '/v1/user/archives/'):
             write_to_fixture(yaml_file, result)
