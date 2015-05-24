@@ -12,6 +12,8 @@ MEDIA_ROOT = 'https://perma.cc/media'
 
 def main(argv):
     key, output_dir = parse_args(argv)
+
+    ensure_dir_exists(output_dir)
     os.chdir(output_dir)
 
     download_user(key)
@@ -39,6 +41,10 @@ def parse_args(argv):
             output_dir = arg
 
     return (key, output_dir)
+
+def ensure_dir_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 def query_api(key, url):
     request = urllib2.Request(API_ROOT + url, headers={'Authorization' : 'ApiKey {key}'.format(key=key)})
@@ -94,11 +100,8 @@ def download_assets(archive):
         if key == 'base_storage_path' or not val or val == 'failed':
             continue
 
-        # create the directory if needed
-        if not os.path.exists(path):
-            os.makedirs(path)
+        ensure_dir_exists(path)
 
-        # write the file
         with open('{0}/{1}'.format(path, val), 'wb') as cap_file:
             url = '{0}/{1}/{2}'.format(MEDIA_ROOT, path, val)
             remote = urllib2.urlopen(url)
