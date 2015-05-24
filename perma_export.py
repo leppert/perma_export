@@ -8,7 +8,8 @@ import yaml
 import urllib2
 
 API_ROOT = 'https://api.perma.cc'
-MEDIA_ROOT = 'https://perma.cc/media'
+MEDIA_ROOT = 'https://user-content.perma.cc/media'
+USER_AGENT = 'Perma Export Script'
 
 def main(argv):
     key, output_dir = parse_args(argv)
@@ -47,7 +48,9 @@ def ensure_dir_exists(path):
         os.makedirs(path)
 
 def query_api(key, url):
-    request = urllib2.Request(API_ROOT + url, headers={'Authorization' : 'ApiKey {key}'.format(key=key)})
+    headers = {'Authorization' : 'ApiKey {key}'.format(key=key),
+               'User-Agent' : USER_AGENT}
+    request = urllib2.Request(API_ROOT + url, headers=headers)
     contents = urllib2.urlopen(request).read()
     return json.loads(contents)
 
@@ -68,7 +71,11 @@ def download_list(key, name):
         # initial seed for the first iteration
         for result in query_paginated_api(key, '/v1/user/{0}/'.format(name)):
             write_to_fixture(yaml_file, result)
-            percent = float(result['meta']['offset'] + len(result['objects'])) / result['meta']['total_count']
+            total = result['meta']['total_count']
+            if total:
+                percent = float(result['meta']['offset'] + len(result['objects'])) / total
+            else:
+                percent = 1
             update_progress(round(percent, 3))
 
 def download_user(key):
@@ -87,10 +94,14 @@ def download_archives(key):
         for result in query_paginated_api(key, '/v1/user/archives/?limit=3'):
             write_to_fixture(yaml_file, result)
 
-            for i, archive in enumerate(result['objects']):
-                download_assets(archive)
-                percent = (result['meta']['offset'] + i + 1.0) / result['meta']['total_count']
-                update_progress(round(percent, 3))
+            total = result['meta']['total_count']
+            if total == 0:
+                update_progress(1)
+            else:
+                for i, archive in enumerate(result['objects']):
+                    download_assets(archive)
+                    percent = (result['meta']['offset'] + i + 1.0) / total
+                    update_progress(round(percent, 3))
 
 def download_assets(archive):
     asset = archive['assets'][0]
@@ -104,8 +115,10 @@ def download_assets(archive):
 
         with open('{0}/{1}'.format(path, val), 'wb') as cap_file:
             url = '{0}/{1}/{2}'.format(MEDIA_ROOT, path, val)
-            remote = urllib2.urlopen(url)
-            cap_file.write(remote.read())
+            # A user agent is required or else you'll get a 403
+            req = urllib2.Request(url, headers={'User-Agent' : USER_AGENT})
+            con = urllib2.urlopen(req)
+            cap_file.write(con.read())
 
 def download_folders(key):
     download_list(key, 'folders')
