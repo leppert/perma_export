@@ -91,7 +91,7 @@ def download_archives(key):
     print 'Downloading archives...'
     with open('archives.yml', 'w') as yaml_file:
         # initial seed for the first iteration
-        for result in query_paginated_api(key, '/v1/user/archives/?limit=3'):
+        for result in query_paginated_api(key, '/v1/user/archives/'):
             write_to_fixture(yaml_file, result)
 
             total = result['meta']['total_count']
